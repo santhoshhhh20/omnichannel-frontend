@@ -13,6 +13,7 @@ import {
   fetchSupabaseTickets, 
   createSupabaseTicket, 
   updateSupabaseTicketStatus,
+  subscribeToSupabaseTickets,
   isSupabaseConfigured
 } from './lib/supabase';
 
@@ -25,15 +26,24 @@ export function App() {
   // Tickets State
   const [ticketsList, setTicketsList] = useState<Ticket[]>([]);
 
-  // Load from Supabase on mount if configured
-  useEffect(() => {
+  const loadProductionTickets = async () => {
     if (isSupabaseConfigured) {
-      fetchSupabaseTickets().then((data) => {
-        if (data && data.length > 0) {
-          setTicketsList(data);
-          showToast('Supabase Connected', 'Loaded live tickets from PostgreSQL database.', 'success');
-        }
+      const data = await fetchSupabaseTickets();
+      setTicketsList(data);
+    }
+  };
+
+  // Load from Supabase on mount & set up Realtime WebSocket listener
+  useEffect(() => {
+    loadProductionTickets();
+
+    if (isSupabaseConfigured) {
+      const unsubscribe = subscribeToSupabaseTickets(() => {
+        loadProductionTickets();
       });
+      return () => {
+        if (unsubscribe) unsubscribe();
+      };
     }
   }, []);
 
@@ -70,54 +80,13 @@ export function App() {
     if (isSupabaseConfigured) {
       const synced = await createSupabaseTicket(created);
       if (synced) {
-        showToast('Synced to Supabase', `Ticket ${id} saved to PostgreSQL database.`, 'success');
+        showToast('Supabase Synced', `Ticket ${id} persisted in PostgreSQL database.`, 'success');
       } else {
-        showToast('Saved Locally', `Ticket ${id} created in workspace.`, 'info');
+        showToast('Local Saved', `Ticket ${id} created in memory.`, 'info');
       }
     } else {
-      showToast('Ticket Created', `Ticket ${id} added to Sync X workspace.`, 'success');
+      showToast('Ticket Created', `Ticket ${id} added to workspace.`, 'success');
     }
-  };
-
-  const handleSeedDemoData = () => {
-    const demoTickets: Ticket[] = [
-      {
-        id: 'TCK-9012',
-        customerName: 'Acme Global Corp',
-        customerAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120',
-        channel: 'WhatsApp',
-        subject: 'Enterprise API webhook delivery latency',
-        status: 'Open',
-        priority: 'Urgent',
-        createdAt: '5 mins ago',
-        assignedTo: 'Sarah Jenkins'
-      },
-      {
-        id: 'TCK-9011',
-        customerName: 'Elena Rostova',
-        customerAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120',
-        channel: 'Telegram',
-        subject: 'SSO SAML single sign-on setup inquiry',
-        status: 'In Progress',
-        priority: 'High',
-        createdAt: '18 mins ago',
-        assignedTo: 'David Chen'
-      },
-      {
-        id: 'TCK-9010',
-        customerName: 'TechCorp Solutions',
-        customerAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=120',
-        channel: 'Email',
-        subject: 'Annual subscription invoice tax ID update',
-        status: 'Pending',
-        priority: 'Medium',
-        createdAt: '42 mins ago',
-        assignedTo: 'Alex Rivera'
-      }
-    ];
-
-    setTicketsList(demoTickets);
-    showToast('Demo Data Loaded', 'Populated 3 test tickets for instant UI testing.', 'success');
   };
 
   const handleUpdateTicketStatus = async (id: string, status: Ticket['status']) => {
@@ -136,7 +105,7 @@ export function App() {
       <Sidebar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
-        unreadCount={ticketsList.length > 0 ? 3 : 0}
+        unreadCount={0}
         openTicketCount={ticketsList.filter(t => t.status !== 'Resolved').length}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
       />
@@ -147,7 +116,6 @@ export function App() {
           activeTab={activeTab} 
           onNewTicketClick={() => setIsNewTicketModalOpen(true)}
           onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-          onSeedDemoData={handleSeedDemoData}
         />
 
         <main className="flex-1 overflow-y-auto">
@@ -156,7 +124,6 @@ export function App() {
               onShowToast={showToast}
               onOpenNewTicket={() => setIsNewTicketModalOpen(true)}
               ticketsCount={ticketsList.length}
-              onSeedDemoData={handleSeedDemoData}
             />
           )}
           {activeTab === 'omnichannel' && (
@@ -171,7 +138,6 @@ export function App() {
               onShowToast={showToast}
               ticketsList={ticketsList}
               onUpdateTicketStatus={handleUpdateTicketStatus}
-              onSeedDemoData={handleSeedDemoData}
             />
           )}
           {activeTab === 'settings' && (

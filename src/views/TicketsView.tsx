@@ -8,8 +8,7 @@ import {
   Send as TelegramIcon,
   Instagram,
   Ticket as TicketIcon,
-  X,
-  TestTube
+  X
 } from 'lucide-react';
 import { Ticket } from '../types';
 
@@ -18,15 +17,13 @@ interface TicketsViewProps {
   onShowToast?: (title: string, description?: string, type?: 'success' | 'info' | 'error') => void;
   ticketsList: Ticket[];
   onUpdateTicketStatus: (id: string, status: Ticket['status']) => void;
-  onSeedDemoData?: () => void;
 }
 
 export const TicketsView: React.FC<TicketsViewProps> = ({ 
   onNewTicketClick, 
   onShowToast,
   ticketsList,
-  onUpdateTicketStatus,
-  onSeedDemoData
+  onUpdateTicketStatus
 }) => {
   const [filterStatus, setFilterStatus] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -99,15 +96,6 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
               className="w-full pl-9 pr-3 py-2 bg-slate-100/70 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium"
             />
           </div>
-          {onSeedDemoData && (
-            <button
-              onClick={onSeedDemoData}
-              className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200/80 shadow-2xs hover:shadow-xs transition-all cursor-pointer flex items-center space-x-1"
-            >
-              <TestTube className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Test Demo</span>
-            </button>
-          )}
           <button 
             onClick={onNewTicketClick}
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 whitespace-nowrap shadow-md shadow-indigo-600/20 hover:shadow-lg hover:shadow-indigo-600/30 hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
@@ -129,27 +117,16 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
               <h4 className="text-sm font-bold text-slate-900">No Support Tickets Found</h4>
               <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1">
                 {ticketsList.length === 0 
-                  ? "Your Sync X ticket queue is empty. Click 'Create Ticket' or 'Test Demo' to add test data."
+                  ? "Your Sync X production queue is clean. Click 'Create Ticket' to add a new support case."
                   : "No tickets match your current filter criteria."}
               </p>
             </div>
-            <div className="flex items-center justify-center space-x-3">
-              {onSeedDemoData && (
-                <button
-                  onClick={onSeedDemoData}
-                  className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 shadow-xs hover:shadow-sm transition-all cursor-pointer flex items-center space-x-1.5"
-                >
-                  <TestTube className="w-4 h-4 text-indigo-600" />
-                  <span>Load Test Demo Data</span>
-                </button>
-              )}
-              <button
-                onClick={onNewTicketClick}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-600/20 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
-              >
-                + Create Ticket
-              </button>
-            </div>
+            <button
+              onClick={onNewTicketClick}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-600/20 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
+            >
+              + Create Ticket
+            </button>
           </div>
         ) : (
           <div className="overflow-x-auto">

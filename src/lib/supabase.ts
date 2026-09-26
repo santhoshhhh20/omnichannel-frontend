@@ -13,11 +13,11 @@ export const isSupabaseConfigured = true;
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // ====================================================================
-// SUPABASE TICKET CRUD API HELPERS
+// PRODUCTION SUPABASE TICKETS API (POSTGRESQL & REALTIME)
 // ====================================================================
 
-export async function fetchSupabaseTickets(): Promise<Ticket[] | null> {
-  if (!supabase) return null;
+export async function fetchSupabaseTickets(): Promise<Ticket[]> {
+  if (!supabase) return [];
   try {
     const { data, error } = await supabase
       .from('tickets')
@@ -25,8 +25,8 @@ export async function fetchSupabaseTickets(): Promise<Ticket[] | null> {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.warn('Supabase fetch error:', error.message);
-      return null;
+      console.warn('Supabase tickets fetch error:', error.message);
+      return [];
     }
 
     return (data || []).map((row: any) => ({
@@ -43,8 +43,8 @@ export async function fetchSupabaseTickets(): Promise<Ticket[] | null> {
       assignedTo: row.assigned_to
     }));
   } catch (err) {
-    console.warn('Supabase connection exception:', err);
-    return null;
+    console.error('Supabase tickets connection exception:', err);
+    return [];
   }
 }
 
@@ -65,12 +65,12 @@ export async function createSupabaseTicket(ticket: Ticket): Promise<boolean> {
     ]);
 
     if (error) {
-      console.warn('Supabase insert error:', error.message);
+      console.warn('Supabase ticket insert error:', error.message);
       return false;
     }
     return true;
   } catch (err) {
-    console.warn('Supabase insert exception:', err);
+    console.error('Supabase ticket insert exception:', err);
     return false;
   }
 }
@@ -84,12 +84,29 @@ export async function updateSupabaseTicketStatus(id: string, status: Ticket['sta
       .eq('id', id);
 
     if (error) {
-      console.warn('Supabase update error:', error.message);
+      console.warn('Supabase ticket update error:', error.message);
       return false;
     }
     return true;
   } catch (err) {
-    console.warn('Supabase update exception:', err);
+    console.error('Supabase ticket update exception:', err);
     return false;
   }
+}
+
+/**
+ * Realtime Subscription for live updates across connected agents/clients
+ */
+export function subscribeToSupabaseTickets(onUpdate: () => void) {
+  if (!supabase) return null;
+  const channel = supabase
+    .channel('public:tickets')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => {
+      onUpdate();
+    })
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
 }

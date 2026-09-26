@@ -1,19 +1,17 @@
 import React from 'react';
-import { Search, Bell, Plus, Sparkles, Filter, Command, TestTube } from 'lucide-react';
+import { Search, Bell, Plus, Sparkles, Filter, Command } from 'lucide-react';
 import { TabType } from '../types';
 
 interface HeaderProps {
   activeTab: TabType;
   onNewTicketClick?: () => void;
   onOpenCommandPalette?: () => void;
-  onSeedDemoData?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
   activeTab, 
   onNewTicketClick,
-  onOpenCommandPalette,
-  onSeedDemoData
+  onOpenCommandPalette
 }) => {
   const titles: Record<TabType, { title: string; subtitle: string }> = {
     dashboard: {
@@ -49,23 +47,13 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Search Bar / Command Palette Trigger */}
         <button
           onClick={onOpenCommandPalette}
-          className="relative hidden sm:flex items-center space-x-3 w-64 px-3.5 py-2 bg-slate-100/80 hover:bg-slate-100 border border-slate-200/90 hover:border-indigo-300 rounded-xl text-xs text-slate-500 transition-all text-left group"
+          className="relative hidden sm:flex items-center space-x-3 w-64 px-3.5 py-2 bg-slate-100/80 hover:bg-slate-100 border border-slate-200/90 hover:border-indigo-300 rounded-xl text-xs text-slate-500 transition-all text-left group cursor-pointer"
         >
           <Search className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />
           <span className="flex-1 truncate font-medium">Search Sync X...</span>
           <span className="flex items-center gap-0.5 text-[10px] font-mono text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-200 group-hover:border-indigo-200">
             <Command className="w-2.5 h-2.5" /> K
           </span>
-        </button>
-
-        {/* Demo Data Tester CTA Button */}
-        <button
-          onClick={onSeedDemoData}
-          title="Load Test Demo Data"
-          className="flex items-center space-x-1.5 px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 font-bold text-xs rounded-xl shadow-2xs hover:shadow-xs hover:-translate-y-0.5 transition-all cursor-pointer"
-        >
-          <TestTube className="w-3.5 h-3.5 text-indigo-600" />
-          <span className="hidden md:inline">Test Demo</span>
         </button>
 
         {/* Notifications Button */}
@@ -77,7 +65,7 @@ export const Header: React.FC<HeaderProps> = ({
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-600 rounded-full ring-2 ring-white"></span>
         </button>
 
-        {/* Dynamic CTA Button */}
+        {/* Dynamic Production Action Button */}
         {activeTab === 'tickets' ? (
           <button 
             onClick={onNewTicketClick}
@@ -99,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center space-x-2 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 font-bold text-xs rounded-xl shadow-2xs hover:shadow-md hover:border-slate-300 transition-all transform hover:-translate-y-0.5 active:translate-y-0 active:scale-98 cursor-pointer"
           >
             <Sparkles className="w-4 h-4 text-indigo-600" />
-            <span>AI Quick Actions</span>
+            <span>AI Actions</span>
           </button>
         )}
       </div>
