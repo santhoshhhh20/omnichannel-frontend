@@ -13,7 +13,7 @@ import {
   fetchSupabaseTickets, 
   createSupabaseTicket, 
   updateSupabaseTicketStatus,
-  subscribeToSupabaseTickets,
+  subscribeToSupabaseRealtime,
   isSupabaseConfigured
 } from './lib/supabase';
 
@@ -23,7 +23,7 @@ export function App() {
   const [isNewTicketModalOpen, setIsNewTicketModalOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
-  // Tickets State
+  // Tickets State - Live from Supabase
   const [ticketsList, setTicketsList] = useState<Ticket[]>([]);
 
   const loadProductionTickets = async () => {
@@ -33,12 +33,13 @@ export function App() {
     }
   };
 
-  // Load from Supabase on mount & set up Realtime WebSocket listener
+  // 1. Initial Fetch on Mount
+  // 2. Realtime WebSocket Listener: Auto-syncs any insert/update across connected browsers
   useEffect(() => {
     loadProductionTickets();
 
     if (isSupabaseConfigured) {
-      const unsubscribe = subscribeToSupabaseTickets(() => {
+      const unsubscribe = subscribeToSupabaseRealtime(() => {
         loadProductionTickets();
       });
       return () => {
@@ -75,12 +76,14 @@ export function App() {
       assignedTo: newTicketData.assignedTo || 'Sarah Jenkins'
     };
 
+    // Optimistic UI update
     setTicketsList((prev) => [created, ...prev]);
 
+    // Permanent Supabase DB Persistence
     if (isSupabaseConfigured) {
       const synced = await createSupabaseTicket(created);
       if (synced) {
-        showToast('Supabase Synced', `Ticket ${id} persisted in PostgreSQL database.`, 'success');
+        showToast('Saved to Supabase DB', `Ticket ${id} permanently created in PostgreSQL.`, 'success');
       } else {
         showToast('Local Saved', `Ticket ${id} created in memory.`, 'info');
       }
@@ -90,12 +93,17 @@ export function App() {
   };
 
   const handleUpdateTicketStatus = async (id: string, status: Ticket['status']) => {
+    // Optimistic UI update
     setTicketsList((prev) =>
       prev.map((t) => (t.id === id ? { ...t, status } : t))
     );
 
+    // Permanent Supabase DB Update
     if (isSupabaseConfigured) {
-      await updateSupabaseTicketStatus(id, status);
+      const updated = await updateSupabaseTicketStatus(id, status);
+      if (updated) {
+        showToast('Realtime DB Sync', `Ticket ${id} status permanently set to ${status}.`, 'success');
+      }
     }
   };
 

@@ -10,12 +10,21 @@ export const supabaseAnonKey =
 
 export const isSupabaseConfigured = true;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
+  }
+});
 
 // ====================================================================
-// PRODUCTION SUPABASE TICKETS API (POSTGRESQL & REALTIME)
+// REALTIME & PERMANENT DB PERSISTENCE MODULE (SUPABASE)
 // ====================================================================
 
+/**
+ * Fetch all tickets permanently stored in Supabase PostgreSQL
+ */
 export async function fetchSupabaseTickets(): Promise<Ticket[]> {
   if (!supabase) return [];
   try {
@@ -25,7 +34,7 @@ export async function fetchSupabaseTickets(): Promise<Ticket[]> {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.warn('Supabase tickets fetch error:', error.message);
+      console.warn('Supabase tickets fetch warning:', error.message);
       return [];
     }
 
@@ -48,6 +57,9 @@ export async function fetchSupabaseTickets(): Promise<Ticket[]> {
   }
 }
 
+/**
+ * Permanently insert a new ticket into Supabase DB
+ */
 export async function createSupabaseTicket(ticket: Ticket): Promise<boolean> {
   if (!supabase) return false;
   try {
@@ -75,6 +87,9 @@ export async function createSupabaseTicket(ticket: Ticket): Promise<boolean> {
   }
 }
 
+/**
+ * Permanently update ticket status in Supabase DB
+ */
 export async function updateSupabaseTicketStatus(id: string, status: Ticket['status']): Promise<boolean> {
   if (!supabase) return false;
   try {
@@ -84,29 +99,86 @@ export async function updateSupabaseTicketStatus(id: string, status: Ticket['sta
       .eq('id', id);
 
     if (error) {
-      console.warn('Supabase ticket update error:', error.message);
+      console.warn('Supabase ticket status update error:', error.message);
       return false;
     }
     return true;
   } catch (err) {
-    console.error('Supabase ticket update exception:', err);
+    console.error('Supabase status update exception:', err);
     return false;
   }
 }
 
 /**
- * Realtime Subscription for live updates across connected agents/clients
+ * Permanently fetch chat conversations from Supabase
  */
-export function subscribeToSupabaseTickets(onUpdate: () => void) {
+export async function fetchSupabaseConversations(): Promise<any[]> {
+  if (!supabase) return [];
+  try {
+    const { data, error } = await supabase
+      .from('conversations')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.warn('Supabase conversations fetch error:', error.message);
+      return [];
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error('Supabase conversations exception:', err);
+    return [];
+  }
+}
+
+/**
+ * Permanently send and insert a message into Supabase
+ */
+export async function sendSupabaseMessage(conversationId: string, sender: string, text: string): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from('messages').insert([
+      {
+        conversation_id: conversationId,
+        sender,
+        text
+      }
+    ]);
+
+    if (error) {
+      console.warn('Supabase message insert error:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Supabase message insert exception:', err);
+    return false;
+  }
+}
+
+/**
+ * Live Realtime Subscription Engine listening to DB mutations across clients
+ */
+export function subscribeToSupabaseRealtime(onTicketChange: () => void, onMessageChange?: () => void) {
   if (!supabase) return null;
-  const channel = supabase
-    .channel('public:tickets')
+
+  const ticketsChannel = supabase
+    .channel('syncx-tickets-realtime')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => {
-      onUpdate();
+      onTicketChange();
+    })
+    .subscribe();
+
+  const messagesChannel = supabase
+    .channel('syncx-messages-realtime')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
+      if (onMessageChange) onMessageChange();
     })
     .subscribe();
 
   return () => {
-    supabase.removeChannel(channel);
+    supabase.removeChannel(ticketsChannel);
+    supabase.removeChannel(messagesChannel);
   };
 }
