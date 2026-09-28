@@ -3,10 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 import { Ticket } from '../types';
 
 export const supabaseUrl = 
-  (import.meta as any).env?.VITE_SUPABASE_URL || 'https://mtwmpikzyuiimivdplyy.supabase.co';
+  (import.meta as any).env?.VITE_SUPABASE_URL || 'https://ikwajzxpoewyvcxdjvje.supabase.co';
 
 export const supabaseAnonKey = 
-  (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || 'sb_publishable_UeSklw0bHzM4jAuw9oyJFA_BMeo_-mb';
+  (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || 'sb_publishable_SyI_lbAazEivYyA-RpkbYw_zfaYil1C';
 
 export const isSupabaseConfigured = true;
 
