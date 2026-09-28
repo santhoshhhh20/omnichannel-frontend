@@ -1,7 +1,7 @@
 -- ====================================================================
 -- SYNC X PRODUCTION SUPABASE DATABASE SCHEMA
 -- Copy and run this script in your Supabase SQL Editor
--- (https://supabase.com/dashboard/project/mtwmpikzyuiimivdplyy/sql)
+-- (https://supabase.com/dashboard/project/ikwajzxpoewyvcxdjvje/sql)
 -- ====================================================================
 
 -- 1. Create Tickets Table
